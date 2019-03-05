@@ -29,7 +29,11 @@ namespace mpcdps {
         Vector3d _t;
 
     public:
-        Transform() {}
+        Transform()
+        {
+            _R = Quaternion<double>(0, 0, 0, 1);
+            _t = Vector3d(0, 0, 0);
+        }
 
         Transform(const Vector3d& t, const Quaternion<double>& R)
         {

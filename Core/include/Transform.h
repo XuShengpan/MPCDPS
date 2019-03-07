@@ -83,7 +83,7 @@ namespace mpcdps {
             R[0] = _R[0];
             R[1] = _R[1];
             R[2] = _R[2];
-            R[3] = _R[2];
+            R[3] = _R[3];
         }
         
         void setTranslation(const Vector3d& t)

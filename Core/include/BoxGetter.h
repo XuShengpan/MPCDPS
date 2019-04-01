@@ -31,6 +31,11 @@ namespace mpcdps {
             if (z > _zmax)  _zmax = z;
         }
 
+        Box3<double> getBox() const
+        {
+            return Box3<double>(_xmin, _xmax, _ymin, _ymax, _zmin, _zmax);
+        }
+
         double _xmin = DBL_MAX;
         double _xmax = -DBL_MAX;
         double _ymin = DBL_MAX;

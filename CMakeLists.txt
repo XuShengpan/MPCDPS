@@ -7,3 +7,4 @@ add_definitions(-D_USE_MATH_DEFINES)
 endif()
 
 add_subdirectory(Core)
+add_subdirectory(PointCloud)

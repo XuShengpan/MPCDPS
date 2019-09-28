@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -92,7 +92,7 @@ void SmartPointer<T>::clear()
 }
 
 template <typename T>
-T* SmartPointer<T>::buffer() const
+T* SmartPointer<T>::get() const
 {
 	return mData;
 };

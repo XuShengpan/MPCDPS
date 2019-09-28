@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -31,9 +31,10 @@ namespace mpcdps {
             if (z > _zmax)  _zmax = z;
         }
 
-        Box3<double> getBox() const
+        template<typename Real>
+        Box3<Real> getBox() const
         {
-            return Box3<double>(_xmin, _xmax, _ymin, _ymax, _zmin, _zmax);
+            return Box3<Real>(_xmin, _xmax, _ymin, _ymax, _zmin, _zmax);
         }
 
         double _xmin = DBL_MAX;

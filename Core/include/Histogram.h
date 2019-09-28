@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -16,7 +16,7 @@
 #define MPCDPS_HISTOGRAM_H
 
 #include <vector>
-#include <string>
+#include <ostream>
 #include "MPCDPSCoreLib.h"
 
 namespace mpcdps {
@@ -28,8 +28,9 @@ namespace mpcdps {
 		~Histogram();
 
 		void initialize(double vmin, double vmax, int n_piece);
+
 		void add(double v);
-		void finish();
+        void finish();
 
 		int get_bin_size() const;
 
@@ -56,31 +57,25 @@ namespace mpcdps {
         /*
            Return mean x for i'th bin.
         */
-        double get_i_x_mean(int i);
+        double get_i_x_mean(int i) const;
 
-        /*
-           Get global mean x.
-        */
-		double get_x_mean();
+        double get_mean() const;
+        double get_variance(double mean) const;
+        double get_min() const { return _xmin; }
+        double get_max() const { return _xmax; }
 
-        /*
-           Get global std.
-        */
-        double get_x_std();
-        
-        /*  
-           Return p,  p = sum(p1, ..., pk) while x_break_k <= x
-        */
-        double get_sum_probability(double x) const;
-
-        void output(const std::string& filepath, int presision = 4) const;
+        friend MPCDPS_CORE_ITEM std::ostream& operator << (std::ostream& out, const Histogram& histg);
 
 	protected:
-		double _xmin;
-		double _xmax;
+		double _xmin_pre;
+		double _xmax_pre;
+
+        double _xmin = DBL_MAX;
+        double _xmax = -DBL_MAX;
+
 		double _dx;
-        double _x_mean = 0;
 		int _count;
+        int _n_pieces;
         std::vector<double> _x_mean_bin;
 		std::vector<double> _probilities_bin;
 	};

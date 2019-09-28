@@ -1,6 +1,3 @@
-#include "Histogram.h"
-#include <fstream>
-#include <cmath>
 /*
 **********************************************************************
 *
@@ -8,12 +5,17 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
 **********************************************************************
 */
+
+#include "Histogram.h"
+#include <fstream>
+#include <cmath>
+#include <iostream>
 
 namespace mpcdps {
 
@@ -29,23 +31,26 @@ namespace mpcdps {
 
     void Histogram::initialize(double vmin, double vmax, int n_piece)
     {
-        _xmin = vmin - 1e-6;
-        _xmax = vmax + 1e-6;
-        _dx = (_xmax - _xmin) / double(n_piece);
-        _probilities_bin.clear();
-        _probilities_bin.resize(n_piece, 0);
-        _x_mean_bin.clear();
-        _x_mean_bin.resize(n_piece, 0);
-        _x_mean = 0;
+        _xmin_pre = vmin - 1e-6;
+        _xmax_pre = vmax + 1e-6;
+        _n_pieces = n_piece;
+        _dx = (_xmax_pre - _xmin_pre) / double(n_piece);
         _count = 0;
+        _x_mean_bin.resize(n_piece, 0);
+        _probilities_bin.resize(n_piece, 0);
     }
 
     void Histogram::add(double v)
     {
-        int i = (v - _xmin) / _dx;
+        int i = (v - _xmin_pre) / _dx;
+        if (i < 0) i = 0;
+        if (i >= _n_pieces)  i = _n_pieces - 1;
         double n_i = _probilities_bin[i];
         _x_mean_bin[i] = (_x_mean_bin[i] * n_i + v) / double(n_i + 1);
         _probilities_bin[i] = n_i + 1;
+        if (v < _xmin)  _xmin = v;
+        if (v > _xmax) _xmax = v;
+
         ++_count;
     }
 
@@ -68,7 +73,7 @@ namespace mpcdps {
     */
     double Histogram::get_i_x_break(int i) const
     {
-        return _xmin + (i + 1) * _dx;
+        return _xmin_pre + (i + 1) * _dx;
     }
 
     /*
@@ -76,9 +81,10 @@ namespace mpcdps {
     */
     double Histogram::get_x_break(double sum_probability) const
     {
-        double sum_p = 0;
         int i = 0;
-        for (i = 0; i < _probilities_bin.size() && sum_p < sum_probability; ++i) {
+        double sum_p = _probilities_bin[i];
+        while (sum_p < sum_probability && i < _probilities_bin.size()) {
+            ++i;
             sum_p += _probilities_bin[i];
         }
         return get_i_x_break(i);
@@ -89,7 +95,16 @@ namespace mpcdps {
     */
     int Histogram::get_i_bin(double x) const
     {
-        return (x - _xmin) / _dx;
+        int i = (x - _xmin_pre) / _dx;
+        if (i < 0) {
+            i = 0;
+            std::cout << "mpcdps::Histogram warning: x less than x_min" << std::endl;
+        }
+        if (i >= _n_pieces) {
+            i = _n_pieces - 1;
+            std::cout << "mpcdps::Histogram warning: x larger than x_max" << std::endl;
+        }
+        return i;
     }
 
     /*
@@ -103,68 +118,50 @@ namespace mpcdps {
     /*
     Return mean x for i'th bin.
     */
-    double Histogram::get_i_x_mean(int i)
+    double Histogram::get_i_x_mean(int i) const
     {
         return _x_mean_bin[i];
     }
 
-    /*
-    Get global mean x.
-    */
-    double Histogram::get_x_mean()
+    double Histogram::get_mean() const
     {
-        if (std::abs(_x_mean) < 1e-8) {
-            for (int i = 0; i < _probilities_bin.size(); ++i) {
-                _x_mean += _probilities_bin[i] * _x_mean_bin[i];
-            }
+        double m = 0;
+        for (int i = 0; i < _x_mean_bin.size(); ++i) {
+            m += _x_mean_bin[i] * _probilities_bin[i];
         }
-        return _x_mean;
+        return m;
     }
 
-    /*
-    Get global std.
-    */
-    double Histogram::get_x_std()
+    //var = expect((X - MEAN)^2)
+    double Histogram::get_variance(double mean) const
     {
-        if (std::abs(_x_mean) < 1e-8) {
-            get_x_mean();
-        }
-        double dx = 0;
-        double std = 0;
+        double var = 0;
         for (int i = 0; i < _probilities_bin.size(); ++i) {
-            dx = _x_mean_bin[i] - _x_mean;
-            std += dx * dx * _probilities_bin[i];
+            double dx = _x_mean_bin[i] - mean;
+            var += dx * dx * _probilities_bin[i];
         }
-        return std;
+        return var;
     }
 
-    /*
-    Return p,  p = sum(p1, ..., pk) while k_x <= x
-    */
-    double Histogram::get_sum_probability(double x) const
+    std::ostream& operator << (std::ostream& out, const Histogram& histg)
     {
-        double p_sum = 0;
-        int x1 = _xmin;
-        for (int i = 0; i < _probilities_bin.size() && x1 < x; ++i) {
-            x1 += _dx;
-            p_sum += _probilities_bin[i];
+        int n = histg.get_bin_size();
+
+        double mean = histg.get_mean();
+        double sdv = std::sqrt(histg.get_variance(mean));
+
+        out << "min: " << histg.get_min() << std::endl;
+        out << "max: " << histg.get_max() << std::endl;
+        out << "mean: " << mean << std::endl;
+        out << "std: " << sdv << "\n" << std::endl;
+
+        out << "i, x, mean_x, probability" << std::endl;
+        double x = histg._xmin_pre;
+        double dx = histg._dx;
+        for (int i = 0; i < n; ++i, x += dx) {
+            out << i << ", " << x << ", " << histg.get_i_x_mean(i) << ", " << histg.get_i_probability(i) << std::endl;
         }
-        return p_sum;
+
+        return out;
     }
-
-    void Histogram::output(const std::string& filepath, int presision) const
-    {
-        std::ofstream ofile(filepath);
-        int n = _probilities_bin.size();
-        ofile << "i, mean_x, x, probability" << std::endl;
-        ofile.setf(std::ios::fixed | std::ios::left);
-        ofile.precision(presision);
-
-        double x = _xmin;
-        for (int i = 0; i < n; ++i, x += _dx) {
-            ofile << i << ", " << _x_mean_bin[i] << ", " << x << ", " << _probilities_bin[i] << std::endl;
-        }
-        ofile.close();
-    }
-
 }

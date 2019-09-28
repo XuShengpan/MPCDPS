@@ -26,7 +26,6 @@ source_group(Math FILES
 ./include/Quaternion.h
 ./include/Quaternion.inl
 ./include/Transform.h
-./include/HoughTransform.h
 ./include/Histogram.h
 )
 

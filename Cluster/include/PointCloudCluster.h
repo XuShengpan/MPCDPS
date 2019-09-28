@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -50,7 +50,7 @@ namespace mpcdps {
 		~PointCloudCluster();
 
 		/* Initialize for the cluster.*/
-		void initialize(const SmartArray2D<T, K>& vtx_array, T vmin[K], T vmax[K]);
+		void initialize(const SmartArray2D<T, K>& vtx_array, const T vmin[K], const T vmax[K]);
 
 		/* Set target ids of points for clustering.*/
 		void setTargetPoints(const std::vector<int>& point_ids);
@@ -66,21 +66,21 @@ namespace mpcdps {
 
 		/*Get class points.
 		* cls = 0, 1, ... , n-1;  n = class_count.
-		* cls = 0 is for the points that are not in target_points.
+		* cls = -1 is for the points that are not in target_points.
 		*/
 		std::vector<int> getClassPoints(int cls) const;
 
 		/*Clear the cluster. */
 		virtual void clear();
 
-		std::vector<uint> getClassVector() const { return _cls_ids; }
+		std::vector<int> getClassVector() const { return _cls_ids; }
 
 	protected:
 		VertexArrayType _vtx_array;  /*Vertex array. */
 		std::vector<int> _target_points;   /*Target points for clustering. */
 		T _vmin[K];
 		T _vmax[K];
-		std::vector<uint> _cls_ids;
+		std::vector<int> _cls_ids;
 		int _cls_count;
 
 		std::vector<int> _seeds;

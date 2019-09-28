@@ -3,6 +3,8 @@
 
 // Source code: https://github.com/nushoin/RTree
 
+//Edit by Xu Shengpan, Email: jack_1227x@163.com
+
 // NOTE This file compiles under MSVC 6 SP5 and MSVC .Net 2003 it may not work on other compilers without modification.
 // Made some modifications by Shengpan Xu.
 

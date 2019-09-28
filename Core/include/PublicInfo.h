@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -40,7 +40,8 @@ const double ZERO_D = 1e-08;
 #define  Deg2Rad(t) ((t)*M_PI/180.0)
 #define  Rad2Deg(t) ((t)/M_PI*180.0)
 
-#define  RANDOM_INT(n_max)  (rand()/double(RAND_MAX) * double(n_max))
+#define  RANDOM_FLOAT()  (rand()/double(RAND_MAX))
+#define  RANDOM_INT(n_max)  (RANDOM_FLOAT() * double(n_max))
 
 template <typename T>
 void SWAP(T& a, T& b)

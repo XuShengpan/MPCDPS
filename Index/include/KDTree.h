@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -70,7 +70,7 @@ namespace mpcdps {
         /*Build the KDTree.
          *  minvalue[i] is minimum value for i'th dimension.
          */
-        void build(const std::vector<int>& elem_ids, T minvalue[], T maxvalue[], T nodesize[]);
+        void build(const std::vector<int>& elem_ids, const T minvalue[], const T maxvalue[], const T nodesize[]);
 
         /*Search the nearest elements with radius, return element id.
          * If no element found, return -1.

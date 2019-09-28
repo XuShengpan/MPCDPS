@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -26,6 +26,7 @@ namespace mpcdps {
 struct OctreeNode
 {
     Box3f box;
+    virtual bool isLeaf() const = 0;
 };
 
 class OctreeBranchNode: public OctreeNode
@@ -48,6 +49,11 @@ public:
         }
     }
 
+    virtual bool isLeaf() const
+    {
+        return false;
+    }
+
     OctreeNode* children[8];
 };
 
@@ -56,6 +62,11 @@ class OctreeLeafNode : public OctreeNode
 public:
     OctreeLeafNode(){}
     ~OctreeLeafNode(){}
+
+    virtual bool isLeaf() const
+    {
+        return true;
+    }
 
     int index;  //data index
 };
@@ -146,13 +157,18 @@ public:
         return _leaf_data;
     }
 
+    const OctreeBranchNode* getRoot() const
+    {
+        return _root;
+    }
+
 protected:
     int get_index(float v, float v0)
     {
         return (v > v0) ? 1 : 0;
     }
 
-    void node_split(StackNode node, std::stack<StackNode>& stk)
+    void node_split(StackNode& node, std::stack<StackNode>& stk)
     {
         const Box3f& box = node.branch_node->box;
         Point3f cnt = box.center();
@@ -203,6 +219,7 @@ protected:
                 child_i->box = box_i;
                 _leaf_data.push_back(ptids_children[i]);
                 child_i->index = _leaf_data.size() - 1;
+                node.branch_node->children[i] = child_i;
             }
         }
     }

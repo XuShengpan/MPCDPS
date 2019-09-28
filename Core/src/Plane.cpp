@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -39,10 +39,15 @@ namespace mpcdps {
         const Point3<T>& pt3)
     {
         Vector3<T> v1 = pt2 - pt1;
+        if (v1.norm() < ZERO_F) {
+            return false;
+        }
         Vector3<T> v2 = pt3 - pt1;
+        if (v2.norm() < ZERO_F) {
+            return false;
+        }
         Vector3<T> v = v1.cross(v2);
-        double d = v.norm() / (v1.norm() * v2.norm());
-        if (d < ZERO_F) {
+        if (v.norm() < ZERO_F) {
             return false;
         }
 
@@ -111,7 +116,7 @@ namespace mpcdps {
     template <typename T>
     bool Plane<T>::interpolate_z(double x, double y, double& z) const
     {
-        if (std::abs(_normal[2]) > cos20) {
+        if (std::abs(_normal[2]) > 1e-6) {
             z = (_c - _normal[0] * x - _normal[1] * y) / _normal[2];
             return true;
         } else {
@@ -280,16 +285,14 @@ namespace mpcdps {
     template <typename T>
     bool plane_fit_ransac(const std::vector<Point3<T> >& points,
         Plane<T>& plane_bestfit,
-        std::vector<int>& inners,
+        std::vector<int>& inliers,
         double dist_error, int max_iter_time, double enough_good)
     {
-        inners.clear();
+        inliers.clear();
         bool found = false;
         int n = points.size();
         int iter_time = 0;
-        Plane<T> fit;
-        
-        std::vector<Point3<T> > iner_samples;
+
         const int n_enough_good = n * enough_good;
         
         std::srand(n);
@@ -299,7 +302,6 @@ namespace mpcdps {
         double err;
         while (iter_time < max_iter_time) {
             tag.reset(false);
-
             for (int k = 0; k < 3; ++k) {
                 j = std::rand() % n;
                 while (tag[j]) {
@@ -308,32 +310,37 @@ namespace mpcdps {
                 model[k] = points[j];
                 tag[j] = true;
             }
-            if (!fit.create(model[0], model[1], model[2])) {
+            Plane<T> plane;
+            if (!plane.create(model[0], model[1], model[2])) {
                 continue;
             }
 
-            std::vector<int> inners_temp;
-            std::vector<Point3<T> > sample_temp;
+            std::vector<int> inliers_temp;
             for (j = 0; j < n; ++j) {
-                err = std::abs(fit.pointDistance(points[j]));
+                err = std::abs(plane.pointDistance(points[j]));
                 if (err <= dist_error) {
-                    sample_temp.push_back(points[j]);
-                    inners_temp.push_back(j);
+                    inliers_temp.push_back(j);
                 }
             }
 
-            if (sample_temp.size() > iner_samples.size()) {
-                iner_samples = sample_temp;
-                inners = inners_temp;
+            if (inliers_temp.size() > inliers.size()) {
+                inliers = inliers_temp;
+                plane_bestfit = plane;
 				found = true;
-				if (iner_samples.size() >= n_enough_good) {
+				if (inliers_temp.size() >= n_enough_good) {
 					break;
 				}   
             }
             ++iter_time;
         }
 
-        plane_fit_leastsquare(iner_samples, plane_bestfit);
+//         if (found) {
+//             std::vector<Point3<T> >inlier_samples;
+//             for (int i = 0; i < inliers.size(); ++i) {
+//                 inlier_samples.push_back(points[inliers[i]]);
+//             }
+//             return plane_fit_leastsquare(iner_samples, plane_bestfit);
+//         }
 
         return found;
     }
@@ -394,13 +401,13 @@ namespace mpcdps {
     template MPCDPS_CORE_ITEM
         bool plane_fit_ransac(const std::vector<Point3<float> >& points,
         Plane<float>& plane_bestfit,
-            std::vector<int>& inners,
+            std::vector<int>& inliers,
         double dist_error_threshold, int max_iter_time, double enough_good);
 
     template MPCDPS_CORE_ITEM
         bool plane_fit_ransac(const std::vector<Point3<double> >& points,
         Plane<double>& plane_bestfit,
-            std::vector<int>& inners,
+            std::vector<int>& inliers,
         double dist_error_threshold, int max_iter_time, double enough_good);
 
     template MPCDPS_CORE_ITEM

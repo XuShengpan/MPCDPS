@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -38,7 +38,7 @@ public:
     inline bool operator== (T* data) const;
     inline bool operator!= (T* data) const;
 
-    inline T* buffer() const;
+    inline T* get() const;
     inline void clear();
 
 protected:

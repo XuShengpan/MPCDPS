@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -42,8 +42,6 @@ void PointCloudDistanceCluster<T, K>::run()
 	kdtree.setElements(_vtx_array);
 	kdtree.build(_target_points, _vmin, _vmax, &ns[0]);
 
-	std::cout << "KDTree built." << std::endl;
-
 	std::stack<int> stk;
 	SmartArray<bool> tag(_vtx_array.size());
 	tag.reset(false);
@@ -52,11 +50,8 @@ void PointCloudDistanceCluster<T, K>::run()
 	std::vector<double> dist2s;
 	std::vector<int> neigbs;
 
-	std::vector<uint> cls_ids(_vtx_array.size(), 0);
-	uint cls_id;
-	uint next_cls_id = 1;
-
-	int n_cls = 0;
+	std::vector<int> cls_ids(_vtx_array.size(), -1);
+	int next_cls_id = 0;
 
 	for (size_t i = 0; i < _seeds.size(); ++i) {
 		pt_id = _seeds[i];
@@ -65,10 +60,8 @@ void PointCloudDistanceCluster<T, K>::run()
 			continue;
 		}
 
-		cls_id = next_cls_id++;
+		int cls_id = next_cls_id++;
 		cls_ids[pt_id] = cls_id;
-
-		n_cls = 1;
 
 		stk.push(pt_id);
 		tag[pt_id] = true;
@@ -84,7 +77,6 @@ void PointCloudDistanceCluster<T, K>::run()
 					cls_ids[pt_id] = cls_id;
 					stk.push(pt_id);
 					tag[pt_id] = true;
-					++n_cls;
 				}
 			}
 		}

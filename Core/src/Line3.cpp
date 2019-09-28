@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2016 - 2018 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -177,18 +177,17 @@ namespace mpcdps {
     template<typename T>
     bool line3_fit_ransac(const std::vector<Point3<T> >& pointList,
         Line3<T>& line3_bestfit,
-        std::vector<Point3<T> >& iner_samples,
+        std::vector<int>& inliers,
         double dist_error,
         int max_iter_time,
         double enough_good
     )
     {
-        iner_samples.clear();
+        inliers.clear();
         bool found = false;
         int n = pointList.size();
         int iter_time = 0;
 
-        std::vector<Point3<T> > sample_tempfit;
         const int n_enough_good = n * enough_good;
 
         std::srand(n);
@@ -198,7 +197,7 @@ namespace mpcdps {
         double err;
         while (iter_time < max_iter_time) {
             tag.reset(false);
-            sample_tempfit.clear();
+            std::vector<int> inliers_temp;
             for (int k = 0; k < 2; ++k) {
                 j = std::rand() % n;
                 while (tag[j]) {
@@ -219,20 +218,29 @@ namespace mpcdps {
             for (j = 0; j < n; ++j) {
                 err = std::abs(fit.pointDistance(pointList[j]));
                 if (err <= dist_error) {
-                    sample_tempfit.push_back(pointList[j]);
+                    inliers_temp.push_back(j);
                 }
             }
 
-            if (sample_tempfit.size() > iner_samples.size()) {
-                iner_samples = sample_tempfit;
+            if (inliers_temp.size() > inliers.size()) {
+                inliers = inliers_temp;
                 line3_bestfit = fit;
                 found = true;
-                if (iner_samples.size() >= n_enough_good) {
-                    return true;
+                if (inliers.size() >= n_enough_good) {
+                    break;
                 }
             }
             ++iter_time;
         }
+
+//         if (found) {
+//             std::vector<Point3<T> > inlier_samples;
+//             for (int i = 0; i < inliers.size(); ++i) {
+//                 inlier_samples.push_back(pointList[inliers[i]]);
+//             }
+//             return line3_fit_leastsquare(inlier_samples, line3_bestfit);
+//         }
+
         return found;
     }
 
@@ -249,7 +257,7 @@ namespace mpcdps {
     template MPCDPS_CORE_ITEM bool line3_fit_ransac(
         const std::vector<Point3<float> >& pointList,
         Line3<float>& line3_bestfit,
-        std::vector<Point3<float> >& iner_samples,
+        std::vector<int>& inliers,
         double dist_error,
         int max_iter_time,
         double enough_good
@@ -258,7 +266,7 @@ namespace mpcdps {
     template MPCDPS_CORE_ITEM bool line3_fit_ransac(
         const std::vector<Point3<double> >& pointList,
         Line3<double>& line3_bestfit,
-        std::vector<Point3<double> >& iner_samples,
+        std::vector<int>& inliers,
         double dist_error,
         int max_iter_time,
         double enough_good

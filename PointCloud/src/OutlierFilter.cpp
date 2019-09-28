@@ -1,3 +1,17 @@
+/*
+**********************************************************************
+*
+* This file is a part of library MPCDPS(Massive Point Cloud Data Processing System).
+* It is a free program and it is protected by the license GPL-v3.0, you may not use the
+* file except in compliance with the License.
+*
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
+*
+* Email: jack_1227x@163.com
+*
+**********************************************************************
+*/
+
 #include "OutlierFilter.h"
 #include <algorithm>
 
@@ -16,7 +30,8 @@ void OutlierFilter::initialize(const SmartArray2D<double, 3>& vtxAry, const Box3
     mVtxAry = vtxAry;
     mBox = box;
     mDistanceShreshold = distance_threshold;
-    mGrid.initialize(box.min(0), box.min(1), box.min(2), box.max(0), box.max(1), box.max(2), distance_threshold);
+    mGrid.initialize1(box.min(0), box.min(1), box.length(0), box.length(1), distance_threshold, distance_threshold);
+    mGrid.initialize_z(box.min(2), box.length(2), distance_threshold);
 }
 
 void OutlierFilter::run()
@@ -27,7 +42,10 @@ void OutlierFilter::run()
     int c = 0;
     int h = 0;
     for (int i = 0; i < mVtxAry.size(); ++i) {
-        mGrid.push(mVtxAry[i], i);
+        r = mGrid.get_r(mVtxAry[i][1]);
+        c = mGrid.get_c(mVtxAry[i][0]);
+        h = mGrid.get_h(mVtxAry[i][2]);
+        mGrid[r][c][h].push_back(i);
     }
 
 	int rn = mGrid.rowCount(), cn = mGrid.colCount(), hn = mGrid.heightCount();
@@ -44,7 +62,11 @@ void OutlierFilter::run(const std::vector<int>& ptIds)
     int c = 0;
     int h = 0;
     for (int i = 0; i < ptIds.size(); ++i) {
-        mGrid.push(mVtxAry[i], i);
+        auto vtx = mVtxAry[ptIds[i]];
+        r = mGrid.get_r(vtx[1]);
+        c = mGrid.get_c(vtx[0]);
+        h = mGrid.get_h(vtx[2]);
+        mGrid[r][c][h].push_back(ptIds[i]);
     }
 
 	int rn = mGrid.rowCount(), cn = mGrid.colCount(), hn = mGrid.heightCount();
@@ -70,7 +92,7 @@ void OutlierFilter::doWork()
 			for (int c = 0; c < _cn; ++c) {
                 if (!mGrid.is_empty(r, c, h)) {
                     if (isGridCellOutlier(r, c, h)) {
-                        ptIds = mGrid.get_cell_points(r, c, h);
+                        ptIds = mGrid[r][c][h];
                         mOutilerPoints.insert(mOutilerPoints.end(), ptIds.begin(), ptIds.end());
                     }
                 }
@@ -88,7 +110,7 @@ bool OutlierFilter::isGridCellOutlier(int r,int c, int h)
 	else if(mCellClassTag[lcd0] == PC_NotOutlier)
 		return false;
 
-    std::vector<int> ptIds = mGrid.get_cell_points(r, c, h);
+    std::vector<int> ptIds = mGrid[r][c][h];
 	if(ptIds.size() >= mNumShreshold) {
 		mCellClassTag[lcd0] = PC_NotOutlier;
 		return false;
@@ -132,7 +154,7 @@ bool OutlierFilter::isGridCellOutlier(int r,int c, int h)
 		mCellClassTag[lcd0] = PC_Outlier;
 		return true;
 	} else if(numNotEmptyNergbor == 1) {
-		if(mGrid.get_cell_points(r1, c1, h1).size() < mNumShreshold) {
+		if(mGrid[r1][c1][h1].size() < mNumShreshold) {
 			if(getNotEmptyNeigborNum(r1,c1,h1) == 1) {
 				mCellClassTag[lcd0] = PC_Outlier;
 				int lcd = getLinearId(r1,c1,h1);
@@ -170,7 +192,7 @@ int OutlierFilter::getNotEmptyNeigborNum(int r,int c, int h) const
 				if(h1>=hn) break;
 
 				if(r1 == r && c1 == c && h1 == h) continue;
-				if(!mGrid.is_empty(r1,c1,h1)) ++n;
+				if(!mGrid.is_empty(r1, c1, h1)) ++n;
 			}
 		}
 	}

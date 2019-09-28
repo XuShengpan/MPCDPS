@@ -1,17 +1,19 @@
+/*
+**********************************************************************
+*
+* This file is a part of library MPCDPS(Massive Point Cloud Data Processing System).
+* It is a free program and it is protected by the license GPL-v3.0, you may not use the
+* file except in compliance with the License.
+*
+* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
+*
+* Email: jack_1227x@163.com
+*
+**********************************************************************
+*/
+
 #ifndef  MPCDPS_FIXEDSIZEMAP_H
 #define  MPCDPS_FIXEDSIZEMAP_H
-
-/*
-===============================================================================
-
-This file is a part of  library MPCDPS (Massive Point Cloud Data Processing System) and it is developed
-by Xu Shengpan, anyone can't duplicate or share it without permission from the author.
-For any question please contact jack_1227x@163.com.
-
-Copyright Xu Shengpan, all rights reserved.
-
-===============================================================================
-*/
 
 #include "SmartArray.h"
 

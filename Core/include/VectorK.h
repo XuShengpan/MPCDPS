@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2020 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -29,6 +29,9 @@ namespace mpcdps {
         /*Constructor.*/
         VectorK()
         {
+            for (int i = 0; i < K; ++i) {
+                this->_data[i] = 0;
+            }
         }
 
         /*Constructor.*/

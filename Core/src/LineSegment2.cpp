@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2020 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -43,31 +43,35 @@ namespace mpcdps {
     }
 
     template <typename T>
-    bool intersect3(const Point2<T>& aa, const Point2<T>& bb, 
-        const Point2<T>& cc, const Point2<T>& dd)  
-    {  
-        double delta = determinant(
-            bb.x() - aa.x(), cc.x() - dd.x(), bb.y() - aa.y(), cc.y() - dd.y());  
-        if (delta <= (1e-6) && delta >= -(1e-6)) {  
-            return false;
-        }  
-        double namenda = determinant(
-            cc.x() - aa.x(), cc.x() - dd.x(), cc.y() - aa.y(), cc.y() - dd.y()) / delta;  
-        if (namenda > 1 || namenda < 0) {  
-            return false;  
-        }  
-        double miu = determinant(
-            bb.x() - aa.x(), cc.x() - aa.x(), bb.y() - aa.y(), cc.y() - aa.y()) / delta;  
-        if (miu > 1 || miu < 0) {
-            return false;  
-        }  
-        return true;  
-    }
-
-    template <typename T>
-    bool LineSegment2<T>::intersects(const LineSegment2& line) const
+    bool LineSegment2<T>::intersects(const LineSegment2<T>& line, Point2<T>& intersection) const
     {
-        return intersect3(_start, _end, line._start, _end);
+        {
+            Line2<T> line1(_start, _end);
+            Line2<T> line2(line._start, line._end);
+
+            if (!line1.intersects(line2, intersection))
+                return false;
+        }
+
+        Vector2<T> v1 = _end - _start;
+        double d1 = v1.norm();
+        v1 /= d1;
+
+        Vector2<T> v = intersection - _start;
+        double d = v.dot(v1);
+        if (d < -1e-6 || d - d1 > 1e-6) {
+            return false;
+        }
+
+        Vector2<T> v2 = line._end - line._start;
+        double d2 = v2.norm();
+        v2 /= d2;
+        v = intersection - line._start;
+        d = v.dot(v2);
+        if (d < -1e-6 || d - d2 > 1e-6) {
+            return false;
+        }
+        return true;
     }
 
     template <typename T>
@@ -155,7 +159,7 @@ namespace mpcdps {
 
 		Vector2<T> dir = line.direction();
 		for (int i = 1; i < pointList.size(); ++i) {
-			e = mpcdps::Vector2<T>(pointList[i] - point).dot(dir);
+			e = Vector2<T>(pointList[i] - point).dot(dir);
 			if (e < e0)  e0 = e;
 			if (e > e1) e1 = e;
 		}
@@ -165,6 +169,45 @@ namespace mpcdps {
 		line_seg._end = point + dir * e1;
 		return line_seg;
 	}
+
+    template <typename T>
+    bool LineSegment2<T>::intersects(const Circle<T>& circle, Point2<T>& intersection) const
+    {
+        Point2<T> A, B;
+        if (circle.contains(_start)) {
+            A = _start;
+            if (circle.contains(_end)) {
+                return false;
+            } else {
+                B = _end;
+            }
+        }
+
+        if (circle.contains(_end)) {
+            A = _end;
+            if (circle.contains(_start)) {
+                return false;
+            } else {
+                B = _start;
+            }
+        }
+
+        Vector2<T> v = A - circle._center;
+        T r1 = v.norm();
+        v /= r1;
+
+        Vector2<T> AB = B - A;
+        double a = AB.norm();
+        double b = AB.dot(v);
+        double r = circle._radius;
+        double a1 = a * a;
+        double b1 = 2.0 * b * r1;
+        double c1 = r1 * r1 - r * r;
+        double delta = b1 * b1 - 4.0 * a1 * c1;
+        double alpha = (-b1 + std::sqrt(delta)) / (2.0 * a1);
+        intersection = A + AB*alpha;
+        return true;
+    }
 
     template MPCDPS_CORE_ITEM class LineSegment2<float>;
     template MPCDPS_CORE_ITEM class LineSegment2<double>;

@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2020 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -41,6 +41,18 @@ namespace mpcdps {
     }
 
     template<typename T>
+    bool Line2<T>::intersects(const Line2<T>& line, Point2<T>& intersection) const
+    {
+        T t = _a * line._b - _b * line._a;
+        if (std::abs(t) < 1e-6) {
+            return false;
+        }
+        intersection[0] = (_c * line._b - _b * line._c) / t;
+        intersection[1] = (_a * line._c - _c * line._a) / t;
+        return true;
+    }
+
+    template<typename T>
     Vector2<T> Line2<T>::direction() const
     {
         return Vector2<T>(-_b, _a);
@@ -50,6 +62,31 @@ namespace mpcdps {
     double Line2<T>::pointDistance(const Point2<T>& point) const
     {
         return (_a * point[0] + _b * point[1] - _c);
+    }
+
+    bool get_max_eigen_for_matrix2(const Matrix<double>& cov2x2, double& e, Vector2d& v)
+    {
+        double a = cov2x2[0][0], b = cov2x2[0][1], c = cov2x2[1][0], d = cov2x2[1][1];
+        double delta = (a + d) * (a + d) - 4.0 * (a * d - b * c);
+
+        if (delta < 1e-6) {  //<= 0
+            return false;
+        }
+
+        double e1 = ((a + d) + std::sqrt(delta)) / 2.0;
+        //double e2 = ((a + d) - std::sqrt(delta)) / 2.0;
+        e = e1;
+
+        if (std::abs(b) < 1e-6) {
+            v[0] = 0;
+            v[1] = 1;
+        } else {
+            v[0] = 1;
+            v[1] = (e - a) / b;
+            v.normalize();
+        }
+
+        return true;
     }
 
     template<typename T>
@@ -87,12 +124,12 @@ namespace mpcdps {
         mat_a[1][1] = yy;
 
         double e;
-        Matrix<double> ev;
-        if (!mat_a.eigenMax(e, ev)) {
+        Vector2<double> v;
+        if (!get_max_eigen_for_matrix2(mat_a, e, v)) {
             return false;
         }
 
-        Vector2d dir(ev[0][0], ev[1][0]);
+        Vector2d dir(v[0], v[1]);
         dir.normalize();
         line._a = dir[1];
         line._b = -dir[0];
@@ -141,12 +178,12 @@ namespace mpcdps {
         mat_a[1][1] = yy;
 
         double e;
-        Matrix<double> ev;
-        if (!mat_a.eigenMax(e, ev)) {
+        Vector2<double> v;
+        if (!get_max_eigen_for_matrix2(mat_a, e, v)) {
             return false;
         }
 
-        Vector2d dir(ev[0][0], ev[1][0]);
+        Vector2d dir(v[0], v[1]);
         dir.normalize();
         line._a = dir[1];
         line._b = -dir[0];

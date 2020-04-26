@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2020 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -242,7 +242,7 @@ namespace mpcdps {
 			mCore->mType = 1;
 
 			double x0 = -DBL_MAX;
-			mpcdps::Point2d pt;
+			Point2d pt;
 			for(i=0; i< n; ++i) {
 				if(xes[i] - x0 > control_dist) {
 					x0 = xes[i];
@@ -259,9 +259,9 @@ namespace mpcdps {
 			mCore->mMin = ymin;
 			mCore->mMax = ymax;
 			mCore->mType = 2;
-			mpcdps::sort_shell_syn(ys, ptIds);
+			sort_shell_syn(ys, ptIds);
 			double y0 = -DBL_MAX;
-			mpcdps::Point2d pt;
+			Point2d pt;
 			for(i=0; i< n; ++i) {
 				if(ys[i] - y0 > control_dist) {
 					y0 = ys[i];
@@ -278,17 +278,17 @@ namespace mpcdps {
 		}
 	}
 
-	std::vector<mpcdps::Point2d> SplineFit::getSamplePoints(double sample_interval) const
+	std::vector<Point2d> SplineFit::getSamplePoints(double sample_interval) const
 	{
 		double x = mCore->mMin;
 		double k, dx, y;
-		std::vector<mpcdps::Point2d> ptList;
+		std::vector<Point2d> ptList;
 		while(x<=mCore->mMax) {
 			y = mCore->mSpline.getY(x);
 			if(mCore->mType == 1)
-				ptList.push_back(mpcdps::Point2d(x,y));
+				ptList.push_back(Point2d(x,y));
 			else
-				ptList.push_back(mpcdps::Point2d(y,x));
+				ptList.push_back(Point2d(y,x));
 
 			k = mCore->mSpline.getFirstDerive(x);
 			dx = std::sqrt(sample_interval*sample_interval/(1.0 + k*k));
@@ -301,9 +301,9 @@ namespace mpcdps {
 	{
 		assert(mCore->mType);
 		if(mCore->mType == 1)
-			return mpcdps::Point2d(pt[0], mCore->mSpline.getY(pt[0]));
+			return Point2d(pt[0], mCore->mSpline.getY(pt[0]));
 		else  //2
-			return mpcdps::Point2d(mCore->mSpline.getY(pt[1]), pt[1]);
+			return Point2d(mCore->mSpline.getY(pt[1]), pt[1]);
 	}
 
 	void SplineFit::clear()

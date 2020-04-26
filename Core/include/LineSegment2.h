@@ -5,7 +5,7 @@
 * It is a free program and it is protected by the license GPL-v3.0, you may not use the
 * file except in compliance with the License.
 *
-* Copyright(c) 2013 - 2019 Xu Shengpan, all rights reserved.
+* Copyright(c) 2013 - 2020 Xu Shengpan, all rights reserved.
 *
 * Email: jack_1227x@163.com
 *
@@ -18,6 +18,7 @@
 #include "Point2.h"
 #include "Rect2.h"
 #include "Line2.h"
+#include "Circle.h"
 #include "MPCDPSCoreLib.h"
 
 namespace mpcdps {
@@ -36,11 +37,16 @@ namespace mpcdps {
         /*Destructor.*/
         ~LineSegment2();
 
-        /*Test whether it intersects with another line segment.*/
-        bool intersects(const LineSegment2& line) const;
+        /*Test whether it intersects with another line segment, if does, save the intersection.*/
+        bool intersects(const LineSegment2<T>& line, Point2<T>& intersection) const;
 
         /* Test whether it intersects with a rect.*/
         bool intersects(const Rect2d& rect) const;
+
+        /*
+            Test whether the line segment intersects with the circle, if do, save intersection and return true, otherwise, return false.
+        */
+        bool intersects(const Circle<T>& circle, Point2<T>& intersection) const;
 
         //Get distance of the point to the line segment.
         double get_point_distance(const Point2<T>& p) const;

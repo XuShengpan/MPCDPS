@@ -133,7 +133,7 @@ namespace mpcdps {
         const T* vtx = NULL;
         double x0 = 0, y0 = 0, z0 = 0;
         double t;
-        for (size_t i = 1; i < n; ++i) {
+        for (size_t i = 0; i < n; ++i) {
             vtx = points[i].buffer();
             t = 1.0 / double(i + 1);
             x0 = x0 * t * double(i) + vtx[0] * t;
@@ -212,7 +212,7 @@ namespace mpcdps {
         const T* vtx = NULL;
         double x0 = 0, y0 = 0, z0 = 0;
         double t;
-        for (size_t i = 1; i < n; ++i) {
+        for (size_t i = 0; i < n; ++i) {
             vtx = points[i].buffer();
             t = 1.0 / double(i + 1);
             x0 = x0 * t * double(i) + vtx[0] * t;

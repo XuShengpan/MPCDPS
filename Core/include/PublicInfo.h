@@ -27,6 +27,8 @@
  typedef unsigned short ushort;
  typedef unsigned int uint;
  typedef unsigned long ulong;
+ typedef long long int64;
+ typedef unsigned long long uint64;
 #endif
 
 const double ZERO_F = 1e-06;

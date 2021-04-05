@@ -70,13 +70,10 @@ protected:
     std::string get_string(float v) const
     {
         int n = v;
+        if (v < 0) --n;
         std::ostringstream strm;
         strm << n;
-        std::string str = strm.str();
-        if (n == 0 && v < 0) {
-            str = "-" + str;
-        }
-        return str;
+        return strm.str();
     }
 
 protected:

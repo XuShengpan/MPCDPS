@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
+
+add_definitions(-std=c++11)
+
 project(MPCDPS)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR})
 
 if(MSVC)
 message("MSVC")

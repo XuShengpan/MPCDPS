@@ -60,6 +60,8 @@ namespace mpcdps {
         /*Gather all of the key and values.*/
         void elemList(std::vector<KeyType>& keys, std::vector<ValueType>& values) const;
 
+        ValueType operator[](int i) const;
+
     private:
         /* Node in map.*/
         struct Node

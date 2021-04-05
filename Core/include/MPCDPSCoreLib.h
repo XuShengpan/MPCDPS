@@ -16,13 +16,17 @@
 #define MPCDPSLID_H
 
 #if defined(_WINDOWS)
-	#if defined(MPCDPS_EXPORT)
-		// For the DLL library.
-		#define MPCDPS_CORE_ITEM __declspec(dllexport)
-   #else
-		// For a client of the DLL library.
-		#define MPCDPS_CORE_ITEM   __declspec(dllimport)
-	#endif
+    #ifdef MPCDPS_SOURCE_COMPILE
+        #define MPCDPS_CORE_ITEM
+    #else
+	    #if defined(MPCDPS_EXPORT)
+		    // For the DLL library.
+		    #define MPCDPS_CORE_ITEM __declspec(dllexport)
+        #else
+		    // For a client of the DLL library.
+		    #define MPCDPS_CORE_ITEM   __declspec(dllimport)
+	    #endif
+    #endif
 #else
     //For Apple and Linux
 	#define MPCDPS_CORE_ITEM

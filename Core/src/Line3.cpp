@@ -14,6 +14,7 @@
 
 #include "Line3.h"
 #include "Matrix.h"
+#include "BoxGetter.h"
 
 namespace mpcdps {
 
@@ -183,40 +184,50 @@ namespace mpcdps {
         double enough_good
     )
     {
+        BoxGetter bg;
+        for (auto pt : pointList) {
+            bg.add_point(pt.x(), pt.y(), pt.z());
+        }
+        const auto box = bg.getBox<float>();
+        const float radius = box.radius();
+        if (radius < 0.5)
+            return false;
+
         inliers.clear();
         bool found = false;
         int n = pointList.size();
         int iter_time = 0;
 
         const int n_enough_good = n * enough_good;
+        const float min_length = radius * 0.6;
 
         std::srand(n);
-        Point3<T> model[3];
-        SmartArray<bool> tag(n);
-        int j;
+        Point3<T> model[2];
+        
         double err;
         while (iter_time < max_iter_time) {
-            tag.reset(false);
+            std::vector<bool> tag(pointList.size(), false);
             std::vector<int> inliers_temp;
-            for (int k = 0; k < 2; ++k) {
+
+            int j = 0;
+            int k_seed = 0;
+            while (k_seed < 2) {
                 j = std::rand() % n;
-                while (tag[j]) {
-                    j = std::rand() % n;
-                }
-                model[k] = pointList[j];
+                if(tag[j])  continue;
+                model[k_seed++] = pointList[j];
                 tag[j] = true;
+
+                if (k_seed >= 2) {
+                    Vector3<T> dp = model[1] - model[0];
+                    if (dp.norm() < min_length) {
+                        --k_seed;
+                    }
+                }
             }
 
-            if (std::abs(model[0][0] - model[1][0]) < 0.01 &&
-                std::abs(model[0][1] - model[1][1]) < 0.01 &&
-                std::abs(model[0][2] - model[1][2]) < 0.01)
-            {
-                continue;
-            }
-
-            Line3<T> fit(model[0], model[1]);
+            Line3<T> line(model[0], model[1]);
             for (j = 0; j < n; ++j) {
-                err = std::abs(fit.pointDistance(pointList[j]));
+                err = std::abs(line.pointDistance(pointList[j]));
                 if (err <= dist_error) {
                     inliers_temp.push_back(j);
                 }
@@ -224,7 +235,7 @@ namespace mpcdps {
 
             if (inliers_temp.size() > inliers.size()) {
                 inliers = inliers_temp;
-                line3_bestfit = fit;
+                line3_bestfit = line;
                 found = true;
                 if (inliers.size() >= n_enough_good) {
                     break;

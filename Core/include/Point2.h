@@ -89,6 +89,47 @@ public:
         this->_data[1] -= vect[1];
     }
 
+    /*Add a Point2 and update this point.*/
+    void operator += (const Point2<T>& point)
+    {
+        this->_data[0] += point[0];
+        this->_data[1] += point[1];
+    }
+
+    /*Subtract a Point2 and update this point.*/
+    void operator -= (const Point2<T>& point)
+    {
+        this->_data[0] -= point[0];
+        this->_data[1] -= point[1];
+    }
+
+    void operator *= (T t)
+    {
+        this->_data[0] *= t;
+        this->_data[1] *= t;
+    }
+
+    void operator /= (T t)
+    {
+        this->_data[0] /= t;
+        this->_data[1] /= t;
+    }
+
+    Point2<T> operator * (T t) const
+    {
+        return Point2<T>(this->_data[0] * t, this->_data[1] * t);
+    }
+
+    Point2<T> operator / (T t) const
+    {
+        return Point2<T>(this->_data[0] / t, this->_data[1] / t);
+    }
+	
+	double norm() const
+    {
+        return std::sqrt(this->_data[0] * this->_data[0] + this->_data[1] * this->_data[1]);
+    }
+
     void setX(T x) { this->_data[0] = x;}
     void setY(T y) { this->_data[1] = y;}
 

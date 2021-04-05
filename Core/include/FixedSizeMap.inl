@@ -142,3 +142,18 @@ void FixedSizeMap<T1, T2>::elemList(
 		i = _data[i].next;
 	}
 }
+
+template <typename T1, typename T2>
+T2 FixedSizeMap<T1, T2>::operator[](int j) const
+{
+    int i = head();
+    int k = 0;
+    while (i != -1) {
+        if (k == j) {
+            return _data[i].value;
+        }
+        i = _data[i].next;
+        ++k;
+    }
+    return ValueType();
+}

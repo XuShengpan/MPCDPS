@@ -85,6 +85,13 @@ namespace mpcdps {
             }
         }
 
+        inline void reset(T t)
+        {
+            for (int i = 0; i < K; ++i) {
+                _data[i] = t;
+            }
+        }
+
     protected:
         T _data[K];   /* The data buffer.*/
     };

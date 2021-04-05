@@ -17,6 +17,7 @@
 
 #include <vector>
 #include <ostream>
+#include <cfloat>
 #include "MPCDPSCoreLib.h"
 
 namespace mpcdps {
@@ -30,6 +31,8 @@ namespace mpcdps {
 		void initialize(double vmin, double vmax, int n_piece);
 
 		void add(double v);
+
+	    //Note: Obsoleted. There is no need to call this function.
         void finish();
 
 		int get_bin_size() const;
@@ -54,17 +57,23 @@ namespace mpcdps {
         */
         double get_i_probability(int i) const;
 
+        unsigned int get_i_frequency(int i) const {return _sample_count_bin[i];}
+
         /*
            Return mean x for i'th bin.
         */
         double get_i_x_mean(int i) const;
 
         double get_mean() const;
-        double get_variance(double mean) const;
+		double get_variance() const;
         double get_min() const { return _xmin; }
         double get_max() const { return _xmax; }
+        double get_dx() const { return _dx; }
 
         friend MPCDPS_CORE_ITEM std::ostream& operator << (std::ostream& out, const Histogram& histg);
+
+	protected:
+		double get_variance(double mean) const;
 
 	protected:
 		double _xmin_pre;
@@ -77,7 +86,7 @@ namespace mpcdps {
 		int _count;
         int _n_pieces;
         std::vector<double> _x_mean_bin;
-		std::vector<double> _probilities_bin;
+		std::vector<unsigned int> _sample_count_bin;
 	};
 }
 

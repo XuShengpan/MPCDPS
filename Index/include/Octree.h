@@ -17,14 +17,20 @@
 
 #include <vector>
 #include <stack>
-#include <Box3.h>
-#include <SmartArray2D.h>
-#include <SmartPointer.h>
+#include "Box3.h"
+#include "SmartArray2D.h"
+#include "SmartPointer.h"
+#include "BoxGetter.h"
+#include "PublicFunc.h"
 
 namespace mpcdps {
 
-struct OctreeNode
+class OctreeNode
 {
+public:
+    OctreeNode() {}
+    virtual ~OctreeNode() {}
+
     Box3f box;
     virtual bool isLeaf() const = 0;
 };
@@ -68,7 +74,7 @@ public:
         return true;
     }
 
-    int index;  //data index
+    std::vector<int> ptids;
 };
 
 template<typename T>
@@ -76,12 +82,10 @@ class Octree
 {
 protected:
     SmartArray2D<T, 3> _points;
-    Point3d _center;
-    int _min_points_per_nodes;
-    float _max_leaf_node_size;
+    int _min_points_per_node;
+    T _max_leaf_size[3];
 
-    std::vector<std::vector<int> > _leaf_data;
-    SmartPointer<OctreeBranchNode> _root;
+    SmartPointer<OctreeNode> _root;
 
 protected:
     struct StackNode
@@ -111,34 +115,41 @@ public:
     {
     }
 
-    void set_min_points_per_node(int n)
+    void setMinPointsForNode(int n)
     {
-        _min_points_per_nodes = n;
+        _min_points_per_node = n;
     }
 
-    void set_max_leaf_node_size(float sz)
+    void setMaxLeafShape(T max_shape[3])
     {
-        _max_leaf_node_size = sz;
+        _max_leaf_size[0] = max_shape[0];
+        _max_leaf_size[1] = max_shape[1];
+        _max_leaf_size[2] = max_shape[2];
     }
 
-    void build(const SmartArray2D<T, 3>& points, 
-        const std::vector<int>& ptids, Box3d box)
+    void build(const SmartArray2D<T, 3>& points, std::vector<int> ptids = std::vector<int>())
     {
-        _center = box.center();
+        if (ptids.empty()) {
+            ptids = make_vector<int>(points.size());
+        }
         _points = points;
-        double xmin = box.min(0) - _center[0];
-        double xmax = box.max(0) - _center[0];
-        double ymin = box.min(1) - _center[1];
-        double ymax = box.max(1) - _center[1];
-        double zmin = box.min(2) - _center[2];
-        double zmax = box.max(2) - _center[2];
-        
-        _root = new OctreeBranchNode;
-        _root->box = Box3f(xmin, xmax, ymin, ymax, zmin, zmax);
-        _leaf_data.clear();
+
+        auto box = getBox(ptids);
+
+        if (!isSplit(box, ptids.size())) {
+            OctreeLeafNode* node = new OctreeLeafNode;
+            node->box = box;
+            node->ptids = ptids;
+            _root = node;
+            return;
+        }
+
+        OctreeBranchNode* branch = new OctreeBranchNode;
+        branch->box = box;
+        _root = branch;
 
         std::stack<StackNode> stk;
-        stk.push(StackNode(_root, ptids));
+        stk.push(StackNode(branch, ptids));
 
         while (!stk.empty()) {
             StackNode node = stk.top();
@@ -147,79 +158,77 @@ public:
         }
     }
 
-    std::vector<std::vector<int> >& get_leaves()
-    {
-        return _leaf_data;
-    }
-
-    const std::vector<std::vector<int> >& get_leaves() const
-    {
-        return _leaf_data;
-    }
-
-    const OctreeBranchNode* getRoot() const
+    const OctreeNode* getRoot() const
     {
         return _root;
     }
 
-protected:
-    int get_index(float v, float v0)
+    const T* getVertex(int ptid) const
     {
-        return (v > v0) ? 1 : 0;
+        return _points[ptid];
     }
 
-    void node_split(StackNode& node, std::stack<StackNode>& stk)
-    {
-        const Box3f& box = node.branch_node->box;
-        Point3f cnt = box.center();
-        double x0 = cnt[0] + _center[0];
-        double y0 = cnt[1] + _center[1];
-        double z0 = cnt[2] + _center[2];
+protected:
 
-        std::vector<std::vector<int> > ptids_children(8);
-        const std::vector<int>& ptids = node.ptids;
-        
-        const T* vtx = NULL;
-        for (int i = 0; i < ptids.size(); ++i) {
-            vtx = _points[ptids[i]];
-            int k = get_index(vtx[2], z0) * 4 + get_index(vtx[1], y0) * 2 + get_index(vtx[0], x0);
-            ptids_children[k].push_back(ptids[i]);
+    inline int getIndex(T v, T v0) const
+    {
+        return (v < v0) ? 0 : 1;
+    }
+
+    inline int getIndex(T* pt, float cnt[3]) const
+    {
+        int ix = getIndex(pt[0], cnt[0]);
+        int iy = getIndex(pt[1], cnt[1]);
+        int iz = getIndex(pt[2], cnt[2]);
+        return (iz * 4 + iy * 2 + ix);
+    }
+
+    mpcdps::Box3f getBox(const std::vector<int>& ptids) const
+    {
+        BoxGetter bg;
+        T* vtx = NULL;
+        for (auto ptid: ptids) {
+            vtx = _points[ptid];
+            bg.add_point(vtx[0], vtx[1], vtx[2]);
         }
 
-        float dx = box.length(0) * 0.5;
-        float dy = box.length(1) * 0.5;
-        float dz = box.length(2) * 0.5;
+        return bg.getBox<float>();
+    }
 
-        bool child_need_split = (dx > _max_leaf_node_size) && (dy > _max_leaf_node_size) && (dz > _max_leaf_node_size);
+    bool isSplit(const Box3f& box, int points_size) const
+    {
+        if ((box.length(0) > _max_leaf_size[0] ||
+            box.length(1) > _max_leaf_size[1] ||
+            box.length(2) > _max_leaf_size[2]) && points_size > _min_points_per_node)
+            return true;
+        else
+            return false;
+    }
+
+    void node_split(StackNode& node, std::stack<StackNode>& stk) const
+    {
+        std::vector<std::vector<int> > ptids_children(8);
+        int k = 0;
+
+        Point3f cnt = node.branch_node->box.center();
+        float* cnt_ptr = cnt.buffer();
+        for (auto ptid : node.ptids) {
+            k = getIndex(_points[ptid], cnt_ptr);
+            ptids_children[k].push_back(ptid);
+        }
 
         for (int i = 0; i < 8; ++i) {
-            if (ptids_children[i].empty()) {
-                continue;
-            }
-
-            int h = i / 4;
-            int r = (i - h * 4) / 2;
-            int c = i % 2;
-
-            Box3f box_i = Box3f(
-                box.min(0) + c * dx,
-                box.min(0) + (c + 1) * dx,
-                box.min(1) + r * dy,
-                box.min(1) + (r + 1) * dy,
-                box.min(2) + h * dz,
-                box.min(2) + (h + 1) * dz);
-
-            if (child_need_split && ptids_children[i].size() > _min_points_per_nodes) {
-                OctreeBranchNode* child_i = new OctreeBranchNode;
-                child_i->box = box_i;
-                node.branch_node->children[i] = child_i;
-                stk.push(StackNode(child_i, ptids_children[i]));
-            } else {
-                OctreeLeafNode* child_i = new OctreeLeafNode;
-                child_i->box = box_i;
-                _leaf_data.push_back(ptids_children[i]);
-                child_i->index = _leaf_data.size() - 1;
-                node.branch_node->children[i] = child_i;
+            auto box = getBox(ptids_children[i]);
+            if (isSplit(box, ptids_children[i].size())) {
+                OctreeBranchNode* branch = new OctreeBranchNode;
+                branch->box = box;
+                stk.push(StackNode(branch, ptids_children[i]));
+                node.branch_node->children[i] = branch;
+            } else if(!ptids_children[i].empty()){
+                OctreeLeafNode* leaf = new OctreeLeafNode;
+                leaf->box = box;
+                leaf->ptids = ptids_children[i];
+                node.branch_node->children[i] = leaf;
             }
         }
     }

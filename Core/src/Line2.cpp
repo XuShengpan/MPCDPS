@@ -197,40 +197,60 @@ namespace mpcdps {
         std::vector<int >& inliers,
         double dist_error, int max_iter_time, double enough_good)
     {
+        double xmin = DBL_MAX;
+        double xmax = -DBL_MAX;
+        double ymin = DBL_MAX;
+        double ymax = -DBL_MAX;
+
+        for (auto pt : pointList) {
+            if (pt.x() < xmin) xmin = pt.x();
+            if (pt.x() > xmax) xmax = pt.x();
+            if (pt.y() < ymin) ymin = pt.y();
+            if (pt.y() > ymax) ymax = pt.y();
+        }
+
+        float radius = 0;
+        {
+            double dx = xmax - xmin;
+            double dy = ymax - ymin;
+            radius = std::sqrt(dx * dx + dy * dy) * 0.5;
+        }
+
         inliers.clear();
         bool found = false;
         int n = pointList.size();
         int iter_time = 0;
 
         const int n_enough_good = n * enough_good;
+        const float min_length = radius * 0.6;
 
         std::srand(n);
-        Point2<T> model[3];
-        SmartArray<bool> tag(n);
-        int j;
+        Point2<T> model[2];
+
         double err;
         while (iter_time < max_iter_time) {
-            tag.reset(false);
+            std::vector<bool> tag(pointList.size(), false);
             std::vector<int> inliers_temp;
 
-            for (int k = 0; k < 2; ++k) {
+            int j = 0;
+            int k_seed = 0;
+            while (k_seed < 2) {
                 j = std::rand() % n;
-                while (tag[j]) {
-                    j = std::rand() % n;
-                }
-                model[k] = pointList[j];
+                if (tag[j])  continue;
+                model[k_seed++] = pointList[j];
                 tag[j] = true;
-            }
-            
-            if (std::abs(model[0][0] - model[1][0]) < ZERO_F &&
-                std::abs(model[0][1] - model[1][1]) < ZERO_F) {
-                continue;
+
+                if (k_seed >= 2) {
+                    Vector2<T> dp = model[1] - model[0];
+                    if (dp.norm() < min_length) {
+                        --k_seed;
+                    }
+                }
             }
 
-            Line2<T> fit(model[0], model[1]);
-
+            Line2<T> line(model[0], model[1]);
             for (j = 0; j < n; ++j) {
-                err = std::abs(fit.pointDistance(pointList[j]));
+                err = std::abs(line.pointDistance(pointList[j]));
                 if (err <= dist_error) {
                     inliers_temp.push_back(j);
                 }
@@ -238,11 +258,11 @@ namespace mpcdps {
 
             if (inliers_temp.size() > inliers.size()) {
                 inliers = inliers_temp;
-				line2_bestfit = fit;
-				found = true;
-				if (inliers.size() >= n_enough_good) {
-					break;
-				}
+                line2_bestfit = line;
+                found = true;
+                if (inliers.size() >= n_enough_good) {
+                    break;
+                }
             }
             ++iter_time;
         }
